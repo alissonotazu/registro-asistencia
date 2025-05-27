@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Asistencia</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    h1 {
+      color: #333;
+    }
+    select, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    #qr-reader {
+      width: 300px;
+      margin-top: 20px;
+    }
+    .status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Registro de Asistencia</h1>
+
+<label for="unidad">Selecciona la unidad:</label><br/>
+<select id="unidad">
+  <option value="">-- Selecciona --</option>
+  <option value="Dexur">Dexur</option>
+  <option value="Jaramillo">Jaramillo</option>
+</select><br/>
+
+<button onclick="startScan()">Iniciar escaneo</button>
+
+<div id="qr-reader"></div>
+<div class="status" id="status"></div>
+
+<script>
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbzWTb-0l03R_R-igsJD7tV8kd6MvdZv2CFih6LXKnj5kAzSXgJiBQLx9cNBxdFBriO4/exec";
+
+  function startScan() {
+    const unidad = document.getElementById("unidad").value;
+    if (!unidad) {
+      alert("Por favor selecciona una unidad.");
+      return;
+    }
+
+    document.getElementById("status").innerText = "Escaneando código...";
+
+    const qrReader = new Html5Qrcode("qr-reader");
+
+    qrReader.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (decodedText) => {
+        try {
+          const data = JSON.parse(decodedText);
+
+          const now = new Date();
+          const hora = now.toLocaleTimeString("es-PE", { hour12: false });
+
+          const payload = {
+            unidad: unidad,
+            nombre: data.nombre,
+            dni: data.dni,
+            carnet: data.carnet,
+            horaIngreso: hora
+          };
+
+          fetch(scriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          document.getElementById("status").innerText = "✅ Registro exitoso: " + data.nombre;
+        } catch (error) {
+          document.getElementById("status").innerText = "❌ Error al leer el código QR";
+        }
+
+        qrReader.stop();
+      },
+      (errorMessage) => {
+        // Ignorar errores de escaneo.
+      }
+    );
+  }
+</script>
+
+</body>
+</html>
