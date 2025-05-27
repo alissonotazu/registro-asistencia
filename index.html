@@ -78,26 +78,21 @@
             horaIngreso: hora
           };
 
-          fetch(scriptUrl, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-
-          document.getElementById("status").innerText = "✅ Registro exitoso: " + data.nombre;
-        } catch (error) {
-          document.getElementById("status").innerText = "❌ Error al leer el código QR";
-        }
-
-        qrReader.stop();
-      },
-      (errorMessage) => {
-        // Ignorar errores de escaneo.
-      }
-    );
+         fetch(URL_DEL_WEBAPP, {
+  method: 'POST',
+  body: JSON.stringify(datosQR),
+  headers: {
+    'Content-Type': 'application/json'
   }
-</script>
-
-</body>
-</html>
+})
+.then(response => response.json())
+.then(data => {
+  if(data.status === "success") {
+    alert("Registro exitoso");
+  } else if(data.status === "duplicate") {
+    alert("Ya registraste tu ingreso hoy en esta unidad.");
+  } else {
+    alert("Error: " + data.message);
+  }
+})
+.catch(error => alert("Error de conexión: " + error));
